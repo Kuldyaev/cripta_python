@@ -41,7 +41,12 @@ async def callback_query_handler(callback_query: types.CallbackQuery)-> None:
         await bot.send_message(callback_query.from_user.id, f'Выбор биржи💹.',
                     reply_markup=exchanges_keyboard())
         
-@user_router.callback_query(lambda c: c.data in ['MEXC_m', 'ByBit_m', 'KuCoin_m', 'BitGet_m', 'Kraken_m' ])
+@user_router.callback_query(lambda c: c.data in ['MEXC_m', 'ByBit_m', 'KuCoin_m', 'BitGet_m',
+                                                 "Huobi_m", "BingX_m", "OKX_m", "BitMart_m",
+                                                 'LBank_m', 'CoinW_m',  'BitForex_m', 'BitFinex_m',
+                                                 'XT_m', 'DigitalFin_m', 'ProBit_m', 'Phemex_m',
+                                                 'Tapbit_m', 'AscendEX_m', 'Poloniex_m', 'Coinbase_m',
+                                                 'Kraken_m' ])
 async def callback_exchange_handler(callback_query: types.CallbackQuery)-> None:
     await bot.delete_message(callback_query.from_user.id, callback_query.message.message_id) 
     await bot.send_message(callback_query.from_user.id, f'Приступим 🥳.',
