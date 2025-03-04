@@ -11,7 +11,7 @@ user_router = Router()
     
 @user_router.message(CommandStart())
 async def cmd_start(message: Message) -> None:
-    await bot.send_message(config.ADMIN_ID, f'Добро пожаловать!🥳.')
+    await bot.send_message(message.from_user.id, f'Добро пожаловать!🥳.')
     await message.answer(
                     f"ДЕМО СЧЁТ\n баланс: 1000 USDT",
                     reply_markup=start_keyboard()
@@ -30,8 +30,9 @@ async def message_handler(message: Message):
 async def callback_query_handler(callback_query: types.CallbackQuery)-> None:
     if callback_query.data == 'start_learn':
         await bot.delete_message(callback_query.from_user.id, callback_query.message.message_id)
-        await bot.send_message(callback_query.from_user.id, f'Выбор рынка💰.',
-                    reply_markup=markets_keyboard())
+        await bot.send_message(callback_query.from_user.id, f'Выбор биржи💹.',
+                    # reply_markup=markets_keyboard())
+                    reply_markup=exchanges_keyboard())
     if callback_query.data == 'spot_matket':
         await bot.delete_message(callback_query.from_user.id, callback_query.message.message_id)
         await bot.send_message(callback_query.from_user.id, f'Выбор биржи💹.',

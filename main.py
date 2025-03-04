@@ -6,12 +6,14 @@ from contextlib import asynccontextmanager
 from routers import router as api_router
 from telebot.create_bot import bot, dp, stop_bot, start_bot 
 from telebot.user_router import user_router
+from database import create_tables, delete_tables
 from config import config
 import uvicorn
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    await create_tables()
     # Код, выполняющийся при запуске приложения
     dp.include_router(user_router)
     await start_bot()
@@ -24,6 +26,7 @@ async def lifespan(app: FastAPI):
     print(f"Webhook set to {webhook_url}")
     yield  # Приложение работает
     # Код, выполняющийся при завершении работы приложения
+    await delete_tables()
     await bot.delete_webhook()
     await stop_bot()
     print("Webhook removed")
