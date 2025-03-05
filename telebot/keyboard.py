@@ -5,13 +5,7 @@ from config import Config
 
 def app_keyboard() -> InlineKeyboardMarkup:
     kb = InlineKeyboardBuilder()
-    # if is_new_user:
-    #      url_add_application = f"{Config.BASE_URL}pages?user_id={user_id}"
-    #      kb.button(text="Участвовать", callback_data="participate")
-    # else:
-    url_add_application = f"{Config.BASE_URL}/pages"
     kb.button(text="WebApp", web_app=WebAppInfo(url="https://slavalion.github.io"))
-
     kb.adjust(1)
     return kb.as_markup()
 
@@ -21,10 +15,19 @@ def start_keyboard() -> InlineKeyboardMarkup:
     kb.adjust(1)
     return kb.as_markup(resize_keyboard=True)
 
-def markets_keyboard() -> InlineKeyboardMarkup:
+def start_keyboard_admin() -> InlineKeyboardMarkup:
+    url_add_application = f"{Config.BASE_URL}/pages"
     kb = InlineKeyboardBuilder()
-    kb.button(text="Спотовый рынок", callback_data='spot_matket' )
-    kb.button(text="Деривативный рынок", callback_data='futures_matket' )
+    kb.button(text="начать тренировку", callback_data='start_learn' )
+    kb.button(text="admin dashboard",  web_app=WebAppInfo(url=url_add_application ))
+    kb.adjust(2)
+    return kb.as_markup(resize_keyboard=True)
+
+def markets_keyboard(telegram_id:int) -> InlineKeyboardMarkup:
+    kb = InlineKeyboardBuilder()
+    print(telegram_id)
+    kb.button(text="Спотовый рынок", web_app=WebAppInfo(url=f"https://slavalion.github.io?isSpot=true&me={telegram_id}") )
+    kb.button(text="Деривативный рынок", web_app=WebAppInfo(url=f"https://slavalion.github.io?isSpot=false&me={telegram_id}"))
     kb.adjust(2)
     return kb.as_markup(resize_keyboard=True)
 

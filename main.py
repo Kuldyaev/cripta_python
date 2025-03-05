@@ -6,7 +6,7 @@ from contextlib import asynccontextmanager
 from routers import router as api_router
 from telebot.create_bot import bot, dp, stop_bot, start_bot 
 from telebot.user_router import user_router
-from database import create_tables, delete_tables
+from database import create_tables, delete_tables, insert_objects
 from config import config
 import uvicorn
 
@@ -14,6 +14,7 @@ import uvicorn
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     await create_tables()
+    await insert_objects()
     # Код, выполняющийся при запуске приложения
     dp.include_router(user_router)
     await start_bot()
