@@ -1,6 +1,7 @@
-from database import Asset, new_session
+from database import User, Asset, new_session
 from pydantic import BaseModel
 from sqlalchemy import select, and_
+# from database.users import get_user_by_telegram_id
 
 class AssetsItem(BaseModel):
     id: int
@@ -35,29 +36,53 @@ async def take_from_account(user_id: int, value: float)->bool:
         else:
             return False
     
-async def transfer_bank_exchange_spot(user_id: int, exchange_id: int, volume: float ) -> bool:
+async def transfer_bank_exchange_spot(telegram_id: int, exchange_id: int, volume: float, hash=str | None ) -> bool:
    async with new_session() as session:
-        asset_exist = await session.execute(select(Asset).where(and_(Asset.user_id == user_id, 
-                                                                     Asset.exchange_id == exchange_id, 
-                                                                     Asset.market_id==2)))
-        asset = asset_exist.scalars().first()
-        if(asset):
-            debit_account = await take_from_account(user_id=user_id, value=volume)
-            if(debit_account):
-                prev_volume = asset.volume
-                asset.volume = prev_volume + volume
-                await session.commit()
-                return True
-            else:
-                return False
+       # Устанавливаем максимальный уровень изоляции
+        connection = await session.connection()  # Получаем соединение
+        connection.execution_options(isolation_level="SERIALIZABLE")  
+       
+       
+        # session.connection().execution_options(isolation_level="SERIALIZABLE")
+        
+        user_ = await session.execute(select(User).where(User.telegram_id == telegram_id).with_for_update())
+        user = user_.scalars().first()
+        user_id=user.id
+
+        print(f"user_id: {user_id}")
+        if(user.hash == None):
+            return False
         else:
-            debit_account = await take_from_account(user_id=user_id, value=volume)
-            if(debit_account):
-                new_asset = Asset(user_id=user_id,market_id=2, exchange_id=exchange_id,
-                       coin_id=2, volume=volume)    
-                session.add(new_asset)
-                await session.flush()
-                await session.commit()
-                return True
+            asset_ = await session.execute(select(Asset).where(and_(Asset.user_id == user_id, 
+                                                                        Asset.exchange_id == exchange_id, 
+                                                                        Asset.market_id==2)))
+            asset = asset_.scalars().first()
+            print(f"asset : {asset}")
+            if(asset):
+                debit_account = await take_from_account(user_id=user_id, value=volume)
+                if(debit_account):
+                    prev_volume = asset.volume
+                    asset.volume = prev_volume + volume
+                    user.hash = None
+                    await session.commit()
+                    return True
+                else:
+                    return False
             else:
-                return False
+                debit_account = await take_from_account(user_id=user_id, value=volume)
+                if(debit_account):
+                    new_asset = Asset(user_id=user_id,market_id=2, exchange_id=exchange_id,
+                        coin_id=2, volume=volume)    
+                    session.add(new_asset)
+                    user.hash = None
+                    await session.flush()
+                    await session.commit()
+                    return True
+                else:
+                    return False
+            
+async def get_assets_by_userId (user_id: int, exchange_id: int): 
+    async with new_session() as session:
+        assets = await session.execute(select(Asset).where(and_(Asset.user_id == user_id, 
+                                                                 Asset.exchange_id == exchange_id)))
+        return assets.scalars().all()

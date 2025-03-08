@@ -1,8 +1,10 @@
 from config import config
-from sqlalchemy import ForeignKey, String
+from sqlalchemy import ForeignKey, String, DateTime
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine, AsyncSession
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 from sqlalchemy.future import select
+from sqlalchemy.sql import func
+from datetime import datetime 
 
 
 # Создание асинхронного движка
@@ -43,7 +45,7 @@ class User(Model):
    telegram_id: Mapped[int | None]
    name: Mapped[str | None] = mapped_column(String(255))
    username: Mapped[str | None] = mapped_column(String(255))
-   balance: Mapped[float]
+   hash: Mapped[str | None] = mapped_column(String(20), default=None)
    exchange: Mapped[int] = mapped_column(ForeignKey("exchanges.id"))
    transfer: Mapped[float]
 
@@ -55,7 +57,18 @@ class Asset(Model):
    exchange_id: Mapped[int | None] = mapped_column(ForeignKey("exchanges.id"))
    coin_id: Mapped[int] = mapped_column(ForeignKey("coins.id"))
    volume: Mapped[float]
+   
+class Transaction(Model): 
+    __tablename__ = "transaction"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
+    asset_out: Mapped[int | None] = mapped_column(ForeignKey("assets.id"))
+    asset_in: Mapped[int] = mapped_column(ForeignKey("assets.id"))
+    volume: Mapped[float]
+    hash: Mapped[str | None] = mapped_column(String(20))
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=func.now())
 
+#
 # class UserDetails(Model):
 #    __tablename__ = "user_details"
 #    id: Mapped[int] = mapped_column(primary_key=True)
@@ -124,6 +137,6 @@ async def insert_objects() -> None:
                     Coin(name="DOGE"),
                     Coin(name="ADA"),
                     User(telegram_id=7894658,name="Mefistofel", username="Diablo",
-                       balance=1000, exchange=1, transfer=300)
+                       exchange=1, transfer=300)
                 ]
             )

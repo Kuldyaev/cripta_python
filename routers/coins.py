@@ -11,11 +11,12 @@ coins_router = APIRouter(
 
 class CoinType(BaseModel):
     name: str
+    id: int
 
 @coins_router.get('/')
 async def get_coins_arr()->List[CoinType]:
    coins = await get_coins()
-   results = [{"name": coin.name}for coin in coins] 
+   results = [{"name": coin.name, "id": coin.id} for coin in coins]
    return results
 
 @coins_router.get('/list')

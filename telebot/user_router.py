@@ -4,9 +4,9 @@ from aiogram.types import Message
 from telebot.create_bot import bot
 from telebot.keyboard import app_keyboard, start_keyboard, start_keyboard_admin, exchanges_keyboard
 from database import  new_session
-from database.users import user_exists, add_user, get_user_balance, update_user_exchange, get_user_exchange, update_user_transfer
+from database.users import user_exists, create_new_user, get_userId_by_telegram_id, update_user_exchange, get_user_exchange, update_user_transfer
 from database.exchanges import get_name_exchange_by_id, get_id_exchange_by_code
-from database.assets import create_deposit_new_user
+from database.assets import get_account_balance
 from config import config
 
 
@@ -18,7 +18,9 @@ async def cmd_start(message: Message) -> None:
     is_user_exist = await user_exists(telegram_id=message.from_user.id)
     
     if(is_user_exist):
-        balance = await get_user_balance(message.from_user.id)
+        user_id = await get_userId_by_telegram_id(telegram_id = message.from_user.id)
+        balance = await get_account_balance(user_id=user_id)
+        # balance = await get_user_balance(message.from_user.id)
         await bot.send_message(message.from_user.id, f'Рады новой встрече, {message.from_user.first_name}!🥳.')
         if(message.from_user.id == config.ADMIN_ID or message.from_user.id == config.PROJECT_ADMIN_ID):
             await message.answer(
@@ -32,11 +34,10 @@ async def cmd_start(message: Message) -> None:
                )
         
     else:
-        new_user_id = await add_user(telegram_id=message.from_user.id, 
+        new_user_id = await create_new_user(telegram_id=message.from_user.id, 
                        name=message.from_user.first_name, 
-                       username=message.from_user.username, 
-                       balance=1000)
-        await create_deposit_new_user(user_id=new_user_id)
+                       username=message.from_user.username)
+        print(f"Создан новый пользователь {new_user_id}")
         await bot.send_message(message.from_user.id, f'Добро пожаловать, {message.from_user.first_name}!🥳.')
         if(int(message.from_user.id) == int(config.ADMIN_ID) or int(message.from_user.id) == int(config.PROJECT_ADMIN_ID)):
             await message.answer(
@@ -52,7 +53,9 @@ async def cmd_start(message: Message) -> None:
     
 @user_router.message()
 async def message_handler(message: Message):
-    balance = await get_user_balance(message.from_user.id)
+    user_id = await get_userId_by_telegram_id(telegram_id = message.from_user.id)
+    balance = await get_account_balance(user_id=user_id)
+     # balance = await get_user_balance(message.from_user.id)
     exchange_id = await get_user_exchange(message.from_user.id)
     exchange = await get_name_exchange_by_id(exchange_id)
     try:
@@ -60,7 +63,7 @@ async def message_handler(message: Message):
         if(number > balance):
             await bot.send_message(message.from_user.id, f'Недостаточно средств\n баланс: {balance} USDT \n ответным сообщением отправьте сумму перевода')
         elif (number > 0):
-            await update_user_transfer(telegram_id=message.from_user.id, transfer_value=number)
+            await update_user_transfer(user_id=user_id, transfer_value=number)
             await message.answer(
                     f"ПЕРЕВОД\n {number} USD на биржу {exchange} \n Остаток на балансe: {balance - number} USD\n",
                     reply_markup=app_keyboard()
@@ -98,7 +101,9 @@ async def callback_query_handler(callback_query: types.CallbackQuery)-> None:
                                                  'Tapbit_m', 'AscendEX_m', 'Poloniex_m', 'Coinbase_m',
                                                  'Kraken_m' ])
 async def callback_exchange_handler(callback_query: types.CallbackQuery)-> None:
-    balance = await get_user_balance(callback_query.from_user.id)
+    # balance = await get_user_balance(callback_query.from_user.id)
+    user_id = await get_userId_by_telegram_id(telegram_id = callback_query.from_user.id)
+    balance = await get_account_balance(user_id=user_id)
     exchange_id = await get_id_exchange_by_code(callback_query.data)
     exchange = callback_query.data[:-2]
     await update_user_exchange(telegram_id=callback_query.from_user.id, exchange_value=exchange_id)

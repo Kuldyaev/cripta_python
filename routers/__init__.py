@@ -4,6 +4,7 @@ from .users import users_router
 from .exchange import exchange_router
 from .transactions import transactions_router
 from .coins import coins_router
+from .assets import assets_router
 
 
 router = APIRouter()
@@ -12,3 +13,4 @@ router.include_router(users_router)
 router.include_router(exchange_router)
 router.include_router(transactions_router)
 router.include_router(coins_router)
+router.include_router(assets_router)
